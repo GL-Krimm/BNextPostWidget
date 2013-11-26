@@ -32,7 +32,6 @@ init = function () {
         }
 
         if (Utility) {
-            console.log('bnet utility detected');
             this.bbDecoder = Utility.parseBBCode;
         }
 
@@ -167,18 +166,13 @@ init = function () {
             timeStampSpan.style.cssFloat = 'right';
 
             //begin processing the date information
-            var createdAt = Date.parse(post.creationDate);
-            var editedAt = Date.parse(post.lastModified);
+            var createdAt = new Date(post.creationDate);
+            var editedAt = new Date(post.lastModified);
 
-            if (editedAt > createdAt) {
+            if (editedAt.getMilliseconds > createdAt.getMilliseconds) {
                 timeStamp.textContent = 'Edited: ';
                 timeStamp.className = 'editedTime';
             }
-
-            //Re-assing editedAt to be a fully fledged date object. The initial
-            //state of this member is equal to the creationDate, so using it
-            //works equally for created at and edited at timestamp elements
-            editedAt = new Date(editedAt);
 
             //format the date string to look like this:
             // Edited: Mar 27 at 12:08:44 PM
