@@ -3,10 +3,8 @@
 // @description    Adds BBCode support for [post] for Bungie.net forum posts
 // @namespace      Greased Lemur Studios
 // @author         Krimm
-// @require        http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js
-// @require        http://static01.bungie.net/Platform/Scripts/BnetPlatform.Client.min.js
 // @include        http://www.bungie.net/*
-// @version        0.8
+// @version        0.9
 // ==/UserScript==
 
 init = function () {
@@ -45,10 +43,10 @@ init = function () {
         // to have a reference to the callback on this object that can be
         // successfully unbound later
         var self = this;
-        self.clCallback = function () {
+        self.showPostCallback = function () {
             getAndInsertBnextPost(self);
         };
-        this.bind(this.toggleLink, 'click', self.clCallback);
+        this.bind(this.toggleLink, 'click', self.showPostCallback);
     };
 
     BNextPostWidget.prototype = {
@@ -105,7 +103,8 @@ init = function () {
                 // rendering the post body in a human readable format.       
                 if (this.bbDecoder) {
                     // if a bbDecoder has been registered, process the text
-                    // and get the bbdecoded text
+                    // and get the bbdecoded text. By default the bbDecoder will attempt
+                    // to be set to the bnet.base.Utility.parseBBCode function
                     contentDiv.innerHTML = this.bbDecoder(post.body);
                 } else {
                     contentDiv.innerHTML = post.body;
@@ -276,15 +275,15 @@ bootstrap = function () {
     }
 };
 
-//add logic to window
-
+//add logic to window. Injecting the script inline grants it
+//access to all objects on the window, including BNet page scripts.
 var script = document.createElement('script');
 script.type = "text/javascript";
 script.textContent = '(' + init.toString() + ')();';
 document.body.appendChild(script);
 
-//bootstrap
-
+//bootstrap. This is dev/debug code intended to be replaced with
+//a better solution. Perhaps event overriding on the bnet page.
 script = document.createElement('script');
 script.type = "text/javascript";
 script.textContent = '(' + bootstrap.toString() + ')();';
