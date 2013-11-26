@@ -1,14 +1,15 @@
 // ==UserScript==
-// @name           Embedded Post Widget
+// @name           BNext Post Widget
 // @description    Adds BBCode support for [post] for Bungie.net forum posts
+// @namespace      Greased Lemur Studios
+// @author         Krimm
+// @require        http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js
+// @require        http://static01.bungie.net/Platform/Scripts/BnetPlatform.Client.min.js
 // @include        http://www.bungie.net/*
-// @version        0.2
+// @version        0.8
 // ==/UserScript==
 
-// BNextPostWidget implementation. Each instance of a BNext post BBTag will have a
-// BNextPostWidget wrapper created for it, responsible for rendering placeholder elements
-// and fetching the post's data upon user interaction ( click )
-(function () {
+init = function () {
     var profileUrlRoot = 'http://www.bungie.net/en/view/profile/index#!page=index&mid=';
     var postUrlRoot = 'http://www.bungie.net/en/Forum/Post?id=';
     var reqUrlRoot = 'http://www.bungie.net/Platform/Forum/GetPostAndParent/';
@@ -30,6 +31,11 @@
 
         if (!this.insertPlaceholder()) {
             return null;
+        }
+
+        if (Utility) {
+            console.log('bnet utility detected');
+            this.bbDecoder = Utility.parseBBCode;
         }
 
         this.toggleLink = document.getElementById('bnext-post-toggle-' + this.postId);
@@ -75,11 +81,10 @@
         // to native posts, wrapped inside a blockquote for clarity. Also creates
         // simple user controls allowing the user to toggle the visibility state of
         // the post if desired.
-        insertBnextPost: function (response) {
-            var json = JSON.parse(response.responseText);
+        insertBnextPost: function (json) {
 
-            var profile = json.Response.authors[0];
-            var post = json.Response.results[0];
+            var profile = json.authors[0];
+            var post = json.results[0];
 
             if (this.bnextPostDiv) {
                 var postWrapper = this.bnextPostDiv.appendChild(document.createElement('blockquote'));
@@ -121,7 +126,7 @@
                 this.bind(closeLink, 'click', function () { toggleBnextPost(self); });
 
                 toggleBnextPost(self);
-            }
+            } 
         },
 
         // Responsible for building the elements required to render the BNext Post
@@ -221,20 +226,7 @@
     // renders the post with a format similar to native posts, but contained
     // within a blockquote for clarity
     var getAndInsertBnextPost = function (bnextPost) {
-        var xhr = new XMLHttpRequest();
-
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState < 4 || xhr.status !== 200) {
-                return;
-            } else if (xhr.readyState === 4) {
-                try {
-                    bnextPost.insertBnextPost(xhr);
-                } catch (e) { }
-            }
-        }
-
-        xhr.open("GET", reqUrlRoot + bnextPost.postId, true);
-        xhr.send("");
+        bungieNetPlatform.forumService.GetPostAndParent(bnextPost.postId, false, function (json) { bnextPost.insertBnextPost(json); }, null);
     };
 
     var toggleBnextPost = function (bnextPost) {
@@ -247,15 +239,15 @@
         }
     };
 
-})();
+};
 
-// bootstrapping logic
-(function () {
+bootstrap = function () {
     var lastProcessedNode, lastNumPosts;
     var pattern = /\[post id='(\d+)'\s?\].+\[\/post]/i;
     var lastNumPosts = 0;
 
     var replacePostsOnPageLoop = function () {
+
         var postsOnPage = document.getElementsByClassName('post');
 
         if (!postsOnPage || postsOnPage.length <= lastNumPosts) {
@@ -279,5 +271,22 @@
         setTimeout(replacePostsOnPageLoop, 1500);
     };
 
-    setTimeout(replacePostsOnPageLoop, 1000);
-})();
+    if (jQuery && bungieNetPlatform) {
+        setTimeout(replacePostsOnPageLoop, 1000);
+    }
+};
+
+//add logic to window
+
+var script = document.createElement('script');
+script.type = "text/javascript";
+script.textContent = '(' + init.toString() + ')();';
+document.body.appendChild(script);
+
+//bootstrap
+
+script = document.createElement('script');
+script.type = "text/javascript";
+script.textContent = '(' + bootstrap.toString() + ')();';
+document.body.appendChild(script);
+
