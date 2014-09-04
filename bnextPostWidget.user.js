@@ -18,6 +18,8 @@ init = function () {
         "May", "Jun", "Jul", "Aug",
         "Sep", "Oct", "Nov", "Dec"
     ];
+	
+	var insertedTopics = {};
 
     BNextPostWidget = function (container, remoteId) {
         // Object members
@@ -35,6 +37,10 @@ init = function () {
             this.bbDecoder = Utility.parseBBCode;
         }
 
+		this.showPostCallback = function () {
+            getAndInsertBnextPost(self);
+        };
+		
         this.toggleLink = document.getElementById('bnext-post-toggle-' + this.postId);
         this.bnextPostDiv = document.getElementById('bnext-post-' + this.postId);
 
@@ -42,9 +48,6 @@ init = function () {
         // to have a reference to the callback on this object that can be
         // successfully unbound later
         var self = this;
-        self.showPostCallback = function () {
-            getAndInsertBnextPost(self);
-        };
         this.bind(this.toggleLink, 'click', self.showPostCallback);
     };
 
@@ -118,7 +121,7 @@ init = function () {
                 closeLink.textContent = 'Close';
 
                 var self = this;
-                this.unbind(this.toggleLink, 'click', self.clCallback);
+                this.unbind(this.toggleLink, 'click', self.showPostCallback);
 
                 this.bind(this.toggleLink, 'click', function () { toggleBnextPost(self); });
                 this.bind(closeLink, 'click', function () { toggleBnextPost(self); });
